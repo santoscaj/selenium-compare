@@ -1,0 +1,53 @@
+{
+    "comparisons": [
+        {
+            "type": "websites",
+            "comparison_name": "learn-plus",
+            "side_by_side_comparison": true,
+            "value": [
+                {
+                    "url": "https://developer.mozilla.org/en-US/docs/Learn",
+                    "name": "MDN learn",
+                    "websiste_specific_elements": []
+                },
+                {
+                    "url": "https://developer.mozilla.org/en-US/plus",
+                    "name": "MDN plus",
+                    "websiste_specific_elements": []
+                }
+            ],
+            "output": {
+                "create_sub_directory": true,
+                "add_name_to_filename": false,
+                "include_timestamp": false,
+                "filename": {
+                    "prefix": "",
+                    "suffix": ""
+                }
+            },
+            "comparisons": {
+                "type": "elements",
+                "comparison_name": "main-content",
+                "side_by_side_comparison": false,
+                "value": [
+                    {
+                        "type": "class",
+                        "value": "main-content"
+                    }
+                ],
+                "comparisons": {
+                    "type": "screens",
+                    "comparison_name": "1024x768",
+                    "side_by_side_comparison": false,
+                    "value": [
+                        {
+                            "width": 1024,
+                            "height": 768,
+                            "zoom": 0
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
