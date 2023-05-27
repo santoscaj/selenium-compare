@@ -22,7 +22,6 @@ class WebDriver {
         if (!propsToCheck) return
         let error = Object.entries(propsToCheck).find((entry) => !entry[1])
         if (error) {
-            console.log(propsToCheck)
             throw new Error(`Missing required property ${error[0]}`)
         }
     }
@@ -45,7 +44,7 @@ class WebDriver {
         if (this.debug) console.log(`updating file, new file info:  ${this.file}`)
     }
 
-    saveFile(data, { fileinfo = this.file, includeDate = true, includeScreenSize = true }) {
+    saveFile(data, { fileinfo = this.file, includeDate = true, includeScreenSize = true, customTag }) {
         let filename = ""
         if (typeof fileinfo === 'string') {
             filename = fileinfo
@@ -55,6 +54,7 @@ class WebDriver {
             if (this?.file?.base) filename += `_${this.file.base}_`
             filename += this.name
             if (includeScreenSize) filename += `_${this.currentScreenSize.width}x${this.currentScreenSize.height}_`
+            if (customTag) filename += `_${customTag}_`
             if (this?.file?.suffix) filename += `_${this.file.suffix}_`
             filename += '.png'
             filename = filename.replace(/_+/g, '_')
@@ -74,6 +74,28 @@ class WebDriver {
         await this.driver.manage().window().setRect({ width, height })
     }
 
+    async describeElement(type, element) {
+        switch (type) {
+            case 'css':
+                return this.driver.findElement(webdriver.By.css(element))
+            case 'xpath':
+                return this.driver.findElement(webdriver.By.xpath(element))
+            case 'id':
+                return this.driver.findElement(webdriver.By.id(element))
+            case 'class':
+                return this.driver.findElement(webdriver.By.className(element))
+            default:
+                return null
+        }
+    }
+
+    async scrollToElement(element) {
+        if (!element) return // nothing to scroll to
+        if (this.debug) console.log(`scrolling to element ${element}`)
+        this.checkProperties()
+        await this.driver.executeScript(`arguments[0].scrollIntoView(true);`, element)
+    }
+
     async takeScreenshot(options) {
         await this.driver
             .takeScreenshot()
@@ -83,15 +105,19 @@ class WebDriver {
     }
 
     async takeScreenshots({ url, screens, elements }) {
-        if (this.debug) console.log(`screenshot for url ${url}, details: `, { screens, elements })
         this.checkProperties({ url })
         await this.driver.get(url);
 
         if (!screens || !screens?.length === 0) screens = [{ width: null, height: null }]
+        if (!elements || !elements?.length === 0) elements = [{ type: null, value: 'default' }]
 
-        for (let { width, height } of screens) {
-            await this.changeScreenSize({ width, height })
-            await this.takeScreenshot({ includeScreenSize: true })
+        for (let element of elements) {
+            let el = await this.describeElement(element.type, element.value)
+            await this.scrollToElement(el)
+            for (let { width, height } of screens) {
+                await this.changeScreenSize({ width, height })
+                await this.takeScreenshot({ includeScreenSize: true, customTag: element.value })
+            }
         }
     }
 
