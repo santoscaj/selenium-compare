@@ -1,5 +1,5 @@
 {
-  "name": "selenium-screenshot",
+  "name": "selenium-compare",
   "version": "1.0.0",
   "description": "",
   "main": "src/app.js",
