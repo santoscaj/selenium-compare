@@ -1,0 +1,37 @@
+{
+    "websites": [
+        {
+            "url": "https://developer.mozilla.org/en-US/docs/Learn",
+            "name": "MDN learn",
+            "websiste_specific_elements": []
+        },
+        {
+            "url": "https://developer.mozilla.org/en-US/plus",
+            "name": "MDN plus",
+            "websiste_specific_elements": []
+        }
+    ],
+    "comparisons": [
+        {
+            "side_by_side_comparison": true,
+            "elements": [
+                {
+                    "type": "class",
+                    "value": "main-content"
+                }
+            ],
+            "screen_sizes": [
+                {
+                    "width": 1024,
+                    "height": 768,
+                    "zoom": 0
+                }
+            ],
+            "output_dir": "",
+            "output_file_name": {
+                "prefix": "screenshot",
+                "suffix": ""
+            }
+        }
+    ]
+}

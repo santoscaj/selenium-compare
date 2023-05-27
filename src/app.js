@@ -4,6 +4,8 @@ const file_date = new Date().toISOString().replace(/[\-:]/g, '').replace('T', "_
 const file = `output/${file_date}.png`
 const encoding_system = 'base64'
 
+const config = require('../config.json')
+
 async function takeScrenshot() {
 
     let driver = new webdriver.Builder()
@@ -21,4 +23,4 @@ async function takeScrenshot() {
     await driver.quit();
 }
 
-takeScrenshot()
+// takeScrenshot()
