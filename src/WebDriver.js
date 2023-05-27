@@ -19,6 +19,7 @@ class WebDriver {
 
     checkProperties(propsToCheck) {
         if (!this.driver) throw new Error('Driver has not been set up')
+        if (!propsToCheck) return
         let error = Object.entries(propsToCheck).find((entry) => !entry[1])
         if (error) {
             console.log(propsToCheck)
@@ -31,7 +32,6 @@ class WebDriver {
             .forBrowser(webdriver.Browser.CHROME)
             .usingServer(this.server)
             .build();
-        return this
     }
 
     updateFile(fileinfo) {
@@ -56,24 +56,43 @@ class WebDriver {
         }
         if (this.debug) console.log(`Saving file ${filename}`)
         fs.writeFileSync(filename, data, this.encoding);
+        return filename
     }
 
-    async takeScreenshot({ url, screen, element }) {
-        if (this.debug) console.log(`screenshot for url ${url}, details: `, { screen, element })
-        this.checkProperties({ url })
-        await this.driver.get(url);
+    async changeScreenSize({ width, height }) {
+        if (this.debug) console.log(`changing screen size to ${width}x${height}`)
+        this.checkProperties()
+        if (!width && !height) return
+        if (!width) width = await this.driver.manage().window().getSize().width
+        if (!height) height = await this.driver.manage().window().getSize().height
+        await this.driver.manage().window().setRect({ width, height })
+    }
+
+    async takeScreenshot() {
         await this.driver
             .takeScreenshot()
             .then((image) => {
                 this.saveFile(image)
             })
-        return this
+    }
+
+    async takeScreenshots({ url, screens, elements }) {
+        if (this.debug) console.log(`screenshot for url ${url}, details: `, { screens, elements })
+        this.checkProperties({ url })
+        await this.driver.get(url);
+
+        if (!screens || !screens?.length === 0) screens = [{ width: null, height: null }]
+
+        for (let { width, height } of screens) {
+            await this.changeScreenSize({ width, height })
+            await this.takeScreenshot()
+        }
     }
 
     compare(saveProps, ...webdrivers) { }
 
-    close() {
-        this?.driver?.quit()
+    async close() {
+        await this?.driver?.quit()
     }
 
 }

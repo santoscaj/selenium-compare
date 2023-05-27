@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "clean": "find output -mmin +5 -delete",
+    "purge": "rm -rf output/*"
   },
   "keywords": [],
   "author": "",

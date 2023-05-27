@@ -5,9 +5,9 @@ const WebDriver = require('./WebDriver')
 const config = require('../config.json')
 
 async function main() {
-    let driver = new WebDriver('mytest')
+    let driver = new WebDriver({ name: 'test', debug: true })
     await driver.setup()
-    await driver.takeScreenshot({ url: 'http://google.com' })
+    await driver.takeScreenshots({ url: config.websites[0].url })
     await driver.close()
 }
 
