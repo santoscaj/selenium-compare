@@ -4,15 +4,20 @@
   "description": "",
   "main": "src/app.js",
   "scripts": {
+    "docker": "docker-compose up -d --force-recreate --build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "clean": "find output -mmin +5 -delete",
     "purge": "rm -rf output/*",
-    "prune": "rm -rf output/*"
+    "prune": "rm -rf output/*",
+    "logs": "docker-compose logs -f",
+    "down": "docker-compose down -v --remove-orphans",
+    "restart": "docker-compose up -d --force-recreate",
+    "reset": "npm run purge && npm run restart"
   },
   "keywords": [],
-  "author": "",
+  "author": "Alberto Santos",
   "license": "ISC",
   "dependencies": {
     "selenium-webdriver": "^4.9.2"

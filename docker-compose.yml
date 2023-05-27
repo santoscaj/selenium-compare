@@ -5,6 +5,7 @@ version: "3"
 services:
   chrome:
     image: selenium/node-chrome:beta
+    container_name: selenium-screenshot-chrome
     shm_size: 2gb
     depends_on:
       - selenium-hub
@@ -15,6 +16,7 @@ services:
 
   selenium-hub:
     image: selenium/hub:latest
+    container_name: selenium-screenshot-selenium-hub
     ports:
       - "4442:4442"
       - "4443:4443"
