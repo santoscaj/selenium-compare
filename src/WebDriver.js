@@ -32,6 +32,9 @@ class WebDriver {
             .forBrowser(webdriver.Browser.CHROME)
             .usingServer(this.server)
             .build();
+
+        const { height, width } = await this.driver.manage().window().getSize()
+        this.currentScreenSize = { width, height }
     }
 
     updateFile(fileinfo) {
@@ -42,17 +45,19 @@ class WebDriver {
         if (this.debug) console.log(`updating file, new file info:  ${this.file}`)
     }
 
-    saveFile(data, fileinfo = this.file) {
+    saveFile(data, { fileinfo = this.file, includeDate = true, includeScreenSize = true }) {
         let filename = ""
         if (typeof fileinfo === 'string') {
             filename = fileinfo
         } else {
             filename += this.outdir + '/'
-            if (this?.file?.prefix) filename += this.file.prefix + '_'
-            if (this?.file?.base) filename += this.file.base + '_'
+            if (this?.file?.prefix) filename += `_${this.file.prefix}_`
+            if (this?.file?.base) filename += `_${this.file.base}_`
             filename += this.name
-            if (this?.file?.suffix) filename += this.file.suffix + '_'
+            if (includeScreenSize) filename += `_${this.currentScreenSize.width}x${this.currentScreenSize.height}_`
+            if (this?.file?.suffix) filename += `_${this.file.suffix}_`
             filename += '.png'
+            filename = filename.replace(/_+/g, '_')
         }
         if (this.debug) console.log(`Saving file ${filename}`)
         fs.writeFileSync(filename, data, this.encoding);
@@ -63,16 +68,17 @@ class WebDriver {
         if (this.debug) console.log(`changing screen size to ${width}x${height}`)
         this.checkProperties()
         if (!width && !height) return
-        if (!width) width = await this.driver.manage().window().getSize().width
-        if (!height) height = await this.driver.manage().window().getSize().height
+        if (!width) width = this.currentScreenSize.width
+        if (!height) height = this.currentScreenSize.height
+        this.currentScreenSize = { width, height }
         await this.driver.manage().window().setRect({ width, height })
     }
 
-    async takeScreenshot() {
+    async takeScreenshot(options) {
         await this.driver
             .takeScreenshot()
             .then((image) => {
-                this.saveFile(image)
+                this.saveFile(image, options)
             })
     }
 
@@ -85,7 +91,7 @@ class WebDriver {
 
         for (let { width, height } of screens) {
             await this.changeScreenSize({ width, height })
-            await this.takeScreenshot()
+            await this.takeScreenshot({ includeScreenSize: true })
         }
     }
 

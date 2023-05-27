@@ -22,8 +22,44 @@
             ],
             "screens": [
                 {
+                    "width": 1050,
+                    "height": 978,
+                    "zoom": 0
+                },
+                {
+                    "name": "iPhone SE",
+                    "width": 375,
+                    "height": 667,
+                    "zoom": 0
+                },
+                {
+                    "name": "Pixel 5",
+                    "width": 393,
+                    "height": 851,
+                    "zoom": 0
+                },
+                {
+                    "name": "iPad Mini",
+                    "width": 768,
+                    "height": 1024,
+                    "zoom": 0
+                },
+                {
+                    "name": "iPad Pro",
                     "width": 1024,
-                    "height": 768,
+                    "height": 1366,
+                    "zoom": 0
+                },
+                {
+                    "name": "Desktop",
+                    "width": 1920,
+                    "height": 1080,
+                    "zoom": 0
+                },
+                {
+                    "name": "Desktop",
+                    "width": 2560,
+                    "height": 1440,
                     "zoom": 0
                 }
             ],

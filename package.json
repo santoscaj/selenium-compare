@@ -8,7 +8,8 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "clean": "find output -mmin +5 -delete",
-    "purge": "rm -rf output/*"
+    "purge": "rm -rf output/*",
+    "prune": "rm -rf output/*"
   },
   "keywords": [],
   "author": "",
