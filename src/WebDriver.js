@@ -51,10 +51,6 @@ class WebDriver {
         this.currentScreenSize = { width, height }
     }
 
-    async addComparisonFiles() {
-
-    }
-
     updateFile(fileinfo) {
         if (fileinfo) this.file = fileinfo
         else if (typeof this.file === 'object') {
@@ -111,10 +107,23 @@ class WebDriver {
     }
 
     async scrollToElement(element) {
-        if (!element) return // nothing to scroll to
-        if (this.debug) console.log(`scrolling to element ${element}`)
+        if (!element) return;
+        if (this.debug) console.log(`scrolling to element`)
         this.checkProperties()
         await this.driver.executeScript(`arguments[0].scrollIntoView(true);`, element)
+    }
+
+    async verticalScroll(element, distanceToScroll = 0, scrollSpeed = 100) {
+        if (distanceToScroll === 0) return
+        if (isNaN(distanceToScroll)) throw new Error('distanceToScroll must be a number')
+        if (isNaN(scrollSpeed)) throw new Error('scrollSpeed must be a number')
+        if (scrollSpeed <= 0) scrollSpeed = 100
+        if (distanceToScroll < 0) scrollSpeed = -scrollSpeed
+        if (this.debug) console.log(`scrolling vertically ${distanceToScroll} pixels at ${scrollSpeed} pixels per second`)
+        for (let YCoord = 0; YCoord <= distanceToScroll; YCoord += scrollSpeed) {
+            this.driver.executeScript(`arguments[0].scrollTo(0, ${YCoord})`, element);
+            await waitRandomSeconds(0.6, 3.8);
+        }
     }
 
     async takeScreenshot(options) {
@@ -142,6 +151,9 @@ class WebDriver {
                 let el = await this.describeElement(element.type, element.value)
                 savedFiles[website.name][element.value] = {}
                 await this.scrollToElement(el)
+                if (website?.scroll_offset?.x) {
+                    await this.verticalScroll(el, website.scroll_offset.x)
+                }
                 for (let { width, height } of screens) {
                     await this.changeScreenSize({ width, height })
                     let { filename, metadata } = await this.takeScreenshot({ includeScreenSize: true, customTag: `${website.name}_${element.value}` })
