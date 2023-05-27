@@ -1,5 +1,5 @@
 const webdriver = require('selenium-webdriver');
-const { checkDir, saveJSONToFile, getFileDate, saveFile } = require('./utils/filesystem')
+const { checkDir, cleanDir, saveJSONToFile, getFileDate, saveFile } = require('./utils/filesystem')
 class WebDriver {
 
     constructor({ name, fileinfo, server, filename, encoding, outdir, debug = false }) {
@@ -35,6 +35,10 @@ class WebDriver {
         this.currentScreenSize = { width, height }
     }
 
+    async addComparisonFiles() {
+
+    }
+
     updateFile(fileinfo) {
         if (fileinfo) this.file = fileinfo
         else if (typeof this.file === 'object') {
@@ -43,24 +47,26 @@ class WebDriver {
         if (this.debug) console.log(`updating file, new file info:  ${this.file}`)
     }
 
-    saveFile(data, { fileinfo = this.file, includeDate = true, includeScreenSize = true, customTag }) {
-        let filename = ""
-        if (typeof fileinfo === 'string') {
-            filename = fileinfo
+    saveFile(data, { filename = "", fileinfo = this.file, includeDate = true, includeScreenSize = true, customTag }) {
+        let metadata = {}
+        if (filename || typeof fileinfo === 'string') {
+            if (!filename) filename = fileinfo
+            metadata = { name: this.name }
+            if (includeScreenSize) metadata.screenSize = `${this.currentScreenSize.width}x${this.currentScreenSize.height}`
+            if (customTag) metadata.customTag += customTag
         } else {
-            filename += this.draftdir + '/'
-            if (this?.file?.prefix) filename += `_${this.file.prefix}_`
-            if (this?.file?.base) filename += `_${this.file.base}_`
-            filename += this.name
-            if (includeScreenSize) filename += `_${this.currentScreenSize.width}x${this.currentScreenSize.height}_`
-            if (customTag) filename += `_${customTag}_`
-            if (this?.file?.suffix) filename += `_${this.file.suffix}_`
-            filename = filename.replace(/_+/g, '_').replace(/\/_/, '/').replace(/_$ /, '')
-            filename += '.png'
+            if (this?.file?.prefix) metadata.prefix = this.file.prefix
+            if (this?.file?.base) metadata.base = this.file.base
+            metadata.name = this.name
+            if (includeScreenSize) metadata.screenSize = `${this.currentScreenSize.width}x${this.currentScreenSize.height}`
+            if (customTag) metadata.customTag = customTag
+            if (this?.file?.suffix) metadata.suffix = this.file.suffix
+
+            filename = `${this.draftdir}/${Object.values(metadata).join('_')}.png`
         }
-        if (this.debug) console.log(`Saving file ${filename}`)
+        if (this.debug) console.log(`Saving file ${filename}`, metadata)
         saveFile(filename, data);
-        return filename
+        return { metadata, filename }
     }
 
     async changeScreenSize({ width, height }) {
@@ -96,13 +102,13 @@ class WebDriver {
     }
 
     async takeScreenshot(options) {
-        let screenshotLocation = null
+        let screenshotInfo = null
         await this.driver
             .takeScreenshot()
             .then((image) => {
-                screenshotLocation = this.saveFile(image, options)
+                screenshotInfo = this.saveFile(image, options)
             })
-        return screenshotLocation
+        return screenshotInfo
     }
 
     async takeScreenshots({ websites, screens, elements }) {
@@ -122,8 +128,8 @@ class WebDriver {
                 await this.scrollToElement(el)
                 for (let { width, height } of screens) {
                     await this.changeScreenSize({ width, height })
-                    let filename = await this.takeScreenshot({ includeScreenSize: true, customTag: `${website.name}_${element.value}` })
-                    savedFiles[website.name][element.value][`${width}x${height}`] = filename
+                    let { filename, metadata } = await this.takeScreenshot({ includeScreenSize: true, customTag: `${website.name}_${element.value}` })
+                    savedFiles[website.name][element.value][`${width}x${height}`] = { filename, metadata }
                 }
             }
 

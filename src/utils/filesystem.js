@@ -3,6 +3,7 @@ const fs = require('fs')
 exports.getFileDate = () => new Date().toISOString().replace(/[\-:]/g, '').replace('T', "_").split('.')[0]
 
 exports.saveFile = (filename, data, encoding = 'base64') => {
+    console.log(`Saving file: ${filename}`, typeof filename)
     fs.writeFileSync(filename, data, encoding)
 }
 
@@ -14,11 +15,25 @@ const createDirectoryIfNotExists = (fullpath) => {
         } catch (error) {
             console.error('Error creating directory:', error);
         }
-    } else {
-        console.log(`Directory already exists: ${fullpath}`);
     }
 }
 
+const deleteFilesInFolder = (folderPath) => {
+    try {
+        const files = fs.readdirSync(folderPath);
+        files.forEach((file) => {
+            const filePath = path.join(folderPath, file);
+            fs.unlinkSync(filePath);
+            console.log(`Deleted file: ${filePath}`);
+        });
+
+        console.log(`All files deleted from folder: ${folderPath}`);
+    } catch (error) {
+        console.error('Error deleting files:', error);
+    }
+}
+
+exports.cleanDir = deleteFilesInFolder
 exports.checkDir = createDirectoryIfNotExists
 
 exports.saveJSONToFile = (jsonData, filePath) => {
