@@ -2,6 +2,16 @@ const webdriver = require('selenium-webdriver');
 const fs = require('fs')
 
 const getFileDate = () => new Date().toISOString().replace(/[\-:]/g, '').replace('T', "_").split('.')[0]
+
+function saveJSONToFile(jsonData, filePath) {
+    try {
+        const jsonString = JSON.stringify(jsonData, null, 2);
+        fs.writeFileSync(filePath, jsonString);
+        console.log(`JSON data saved to file: ${filePath}`);
+    } catch (error) {
+        console.error('Error saving JSON data to file:', error);
+    }
+}
 class WebDriver {
 
     constructor({ name, fileinfo, server, filename, encoding, outdir, debug = false }) {
@@ -56,8 +66,8 @@ class WebDriver {
             if (includeScreenSize) filename += `_${this.currentScreenSize.width}x${this.currentScreenSize.height}_`
             if (customTag) filename += `_${customTag}_`
             if (this?.file?.suffix) filename += `_${this.file.suffix}_`
+            filename = filename.replace(/_+/g, '_').replace(/\/_/, '/').replace(/_$ /, '')
             filename += '.png'
-            filename = filename.replace(/_+/g, '_')
         }
         if (this.debug) console.log(`Saving file ${filename}`)
         fs.writeFileSync(filename, data, this.encoding);
@@ -97,28 +107,39 @@ class WebDriver {
     }
 
     async takeScreenshot(options) {
+        let screenshotLocation = null
         await this.driver
             .takeScreenshot()
             .then((image) => {
-                this.saveFile(image, options)
+                screenshotLocation = this.saveFile(image, options)
             })
+        return screenshotLocation
     }
 
-    async takeScreenshots({ url, screens, elements }) {
-        this.checkProperties({ url })
-        await this.driver.get(url);
+    async takeScreenshots({ websites, screens, elements }) {
+        this.checkProperties({ websites })
 
         if (!screens || !screens?.length === 0) screens = [{ width: null, height: null }]
         if (!elements || !elements?.length === 0) elements = [{ type: null, value: 'default' }]
 
-        for (let element of elements) {
-            let el = await this.describeElement(element.type, element.value)
-            await this.scrollToElement(el)
-            for (let { width, height } of screens) {
-                await this.changeScreenSize({ width, height })
-                await this.takeScreenshot({ includeScreenSize: true, customTag: element.value })
+        let savedFiles = {}
+
+        for (let website of websites) {
+            await this.driver.get(website.url)
+            savedFiles[website.name] = {}
+            for (let element of elements) {
+                let el = await this.describeElement(element.type, element.value)
+                savedFiles[website.name][element.value] = {}
+                await this.scrollToElement(el)
+                for (let { width, height } of screens) {
+                    await this.changeScreenSize({ width, height })
+                    let filename = await this.takeScreenshot({ includeScreenSize: true, customTag: `${website.name}_${element.value}` })
+                    savedFiles[website.name][element.value][`${width}x${height}`] = filename
+                }
             }
+
         }
+        if (this.debug) saveJSONToFile(savedFiles, `${this.outdir}/files.json`)
     }
 
     compare(saveProps, ...webdrivers) { }

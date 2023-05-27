@@ -6,8 +6,12 @@ const config = require('../config.json')
 
 async function main() {
     let driver = new WebDriver({ name: 'test', debug: true })
+    const screens = config.comparisons[0].screens.slice(0, 3)
+    const elements = config.comparisons[0].elements
+    const websites = config.websites
+
     await driver.setup()
-    await driver.takeScreenshots({ url: config.websites[0].url, screens: config.comparisons[0].screens, elements: config.comparisons[0].elements })
+    await driver.takeScreenshots({ websites, screens, elements })
     await driver.close()
 }
 
