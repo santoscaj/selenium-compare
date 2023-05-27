@@ -1,29 +1,18 @@
 const webdriver = require('selenium-webdriver');
-const fs = require('fs')
-
-const getFileDate = () => new Date().toISOString().replace(/[\-:]/g, '').replace('T', "_").split('.')[0]
-
-function saveJSONToFile(jsonData, filePath) {
-    try {
-        const jsonString = JSON.stringify(jsonData, null, 2);
-        fs.writeFileSync(filePath, jsonString);
-        console.log(`JSON data saved to file: ${filePath}`);
-    } catch (error) {
-        console.error('Error saving JSON data to file:', error);
-    }
-}
+const { checkDir, saveJSONToFile, getFileDate, saveFile } = require('./utils/filesystem')
 class WebDriver {
 
     constructor({ name, fileinfo, server, filename, encoding, outdir, debug = false }) {
         if (filename && fileinfo) throw new Error('Cannot set both filename and fileinfo')
 
         this.name = name || (Math.random() + 1).toString(36).substring(7).toUpperCase()
-        this.encoding = encoding || 'base64'
         this.server = server || 'http://localhost:4444/wd/hub'
 
         // Files are expected to be saved in the format prefix_YYYMMMDD_Website/name_element_suffix.png
         this.file = filename || fileinfo || { base: getFileDate() }
         this.outdir = outdir || 'output'
+        this.draftdir = `${this.outdir}/drafts`
+        checkDir(this.draftdir)
         this.debug = debug
     }
 
@@ -59,7 +48,7 @@ class WebDriver {
         if (typeof fileinfo === 'string') {
             filename = fileinfo
         } else {
-            filename += this.outdir + '/'
+            filename += this.draftdir + '/'
             if (this?.file?.prefix) filename += `_${this.file.prefix}_`
             if (this?.file?.base) filename += `_${this.file.base}_`
             filename += this.name
@@ -70,7 +59,7 @@ class WebDriver {
             filename += '.png'
         }
         if (this.debug) console.log(`Saving file ${filename}`)
-        fs.writeFileSync(filename, data, this.encoding);
+        saveFile(filename, data);
         return filename
     }
 
