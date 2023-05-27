@@ -1,18 +1,25 @@
 const webdriver = require('selenium-webdriver');
-const { checkDir, cleanDir, saveJSONToFile, getFileDate, saveFile } = require('./utils/filesystem')
+const { checkDir, cleanDir, pruneDir, saveJSONToFile, getFileDate, saveFile } = require('./utils/filesystem')
+const { combineImages } = require('./utils/images')
 class WebDriver {
 
-    constructor({ name, fileinfo, server, filename, encoding, outdir, debug = false }) {
+    constructor({ name, fileinfo, server, filename, encoding, outdir, debug = false, autoclean, deleteDrafts, deleteOldRuns }) {
         if (filename && fileinfo) throw new Error('Cannot set both filename and fileinfo')
 
+        this.autoclean = autoclean ?? true
+        this.deleteDrafts = deleteDrafts ?? false
+        this.deleteOldRuns = deleteOldRuns ?? true
         this.name = name || (Math.random() + 1).toString(36).substring(7).toUpperCase()
         this.server = server || 'http://localhost:4444/wd/hub'
 
         // Files are expected to be saved in the format prefix_YYYMMMDD_Website/name_element_suffix.png
         this.file = filename || fileinfo || { base: getFileDate() }
         this.outdir = outdir || 'output'
-        this.draftdir = `${this.outdir}/drafts`
-        checkDir(this.draftdir)
+        this.draftDir = `${this.outdir}/drafts`
+        this.resultsDir = `${this.outdir}/results`
+
+        checkDir(this.draftDir)
+        checkDir(this.resultsDir)
         this.debug = debug
     }
 
@@ -26,6 +33,15 @@ class WebDriver {
     }
 
     async setup() {
+        if (this.deleteOldRuns) {
+            pruneDir(this.resultsDir)
+            pruneDir(this.draftDir)
+        } else if (this.autoclean) {
+            cleanDir(this.draftDir)
+            cleanDir(this.resultsDir)
+        }
+
+
         this.driver = new webdriver.Builder()
             .forBrowser(webdriver.Browser.CHROME)
             .usingServer(this.server)
@@ -62,9 +78,9 @@ class WebDriver {
             if (customTag) metadata.customTag = customTag
             if (this?.file?.suffix) metadata.suffix = this.file.suffix
 
-            filename = `${this.draftdir}/${Object.values(metadata).join('_')}.png`
+            filename = `${this.draftDir}/${Object.values(metadata).join('_')}.png`
         }
-        if (this.debug) console.log(`Saving file ${filename}`, metadata)
+        if (this.debug) console.log(`Saving file ${filename}`)
         saveFile(filename, data);
         return { metadata, filename }
     }
@@ -134,10 +150,34 @@ class WebDriver {
             }
 
         }
-        if (this.debug) saveJSONToFile(savedFiles, `${this.outdir}/files.json`)
+        await saveJSONToFile(savedFiles, `${this.outdir}/files.json`)
+        this.processedFiles = savedFiles
     }
 
-    compare(saveProps, ...webdrivers) { }
+    async compare() {
+        if (!this.processedFiles) return
+        if (this.debug) console.log(`comparing generated files:  ${this.file}`)
+        let results = []
+        let websites = Object.keys(this.processedFiles)
+        if (websites.length > 2) throw new Error('Cannot compare more than 2 websites')
+
+        for (let element of Object.keys(this.processedFiles[websites[0]])) {
+            for (let size of Object.keys(this.processedFiles[websites[0]][element])) {
+                const { filename: filename1, metadata: metadata1 } = this.processedFiles[websites[0]][element][size]
+                const { filename: filename2, metadata: metadata2 } = this.processedFiles[websites[1]][element][size]
+                let outputfile = this.resultsDir + '/'
+                if (metadata1.prefix) outputfile += metadata1.prefix + '_'
+                if (metadata1.base) outputfile += metadata1.base + '_'
+                if (metadata1.name) outputfile += metadata1.name + '_'
+                if (metadata1.screenSize) outputfile += metadata1.screenSize + '_'
+                outputfile = outputfile.replace(/_$/, '') + '.png'
+                results.push(outputfile)
+                await combineImages(filename1, filename2, outputfile)
+            }
+        }
+        if (this.deleteDrafts)
+            pruneDir(this.draftDir)
+    }
 
     async close() {
         await this?.driver?.quit()

@@ -10,6 +10,7 @@ async function main() {
 
     await driver.setup()
     await driver.takeScreenshots({ websites, screens, elements })
+    await driver.compare()
     await driver.close()
 }
 
