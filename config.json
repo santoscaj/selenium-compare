@@ -20,7 +20,7 @@
                     "value": "main-content"
                 }
             ],
-            "screen_sizes": [
+            "screens": [
                 {
                     "width": 1024,
                     "height": 768,
@@ -29,7 +29,7 @@
             ],
             "output_dir": "",
             "output_file_name": {
-                "prefix": "screenshot",
+                "prefix": "",
                 "suffix": ""
             }
         }
